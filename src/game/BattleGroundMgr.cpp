@@ -33,6 +33,7 @@
 #include "BattleGroundRV.h"
 #include "BattleGroundIC.h"
 #include "BattleGroundRB.h"
+#include "Formulas.h"
 #include "MapManager.h"
 #include "Map.h"
 #include "MapInstanced.h"
@@ -1571,7 +1572,18 @@ uint32 BattleGroundMgr::CreateBattleGround(BattleGroundTypeId bgTypeId, bool IsA
         case BATTLEGROUND_DS: bg = new BattleGroundDS; break;
         case BATTLEGROUND_RV: bg = new BattleGroundRV; break;
         case BATTLEGROUND_IC: bg = new BattleGroundIC; break;
-        case BATTLEGROUND_RB: bg = new BattleGroundRB; break;
+	case BATTLEGROUND_RB:
+        switch(MapID)
+            {
+                case 30:  bg = new BattleGroundAV;     break;
+                case 489: bg = new BattleGroundWS;     break;
+                case 529: bg = new BattleGroundAB;  break;
+                case 566: bg = new BattleGroundEY;     break;
+                case 607: bg = new BattleGroundSA;     break;
+                case 628: bg = new BattleGroundIC;     break;
+                default:  bg = new BattleGroundRB; break;
+            }
+        break;
         default:bg = new BattleGround;   break;             // placeholder for non implemented BG
     }
 
@@ -1796,15 +1808,16 @@ void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, const uint6
     *data << uint32(0);                                     // 3.3.3 winArena
     *data << uint32(0);                                     // 3.3.3 lossHonor
 
-    uint8 isRandom = 0;
+    uint8 isRandom = 1;
     *data << uint8(isRandom);                               // 3.3.3 isRandom
     if(isRandom)
     {
+	uint32 hk = MaNGOS::Honor::hk_honor_at_level(plr->getLevel(),plr->HasDoneRandomBattleGround() ? 15 : 30);
         // Rewards (random)
-        *data << uint8(0);                                  // 3.3.3 hasWin_Random
-        *data << uint32(0);                                 // 3.3.3 winHonor_Random
-        *data << uint32(0);                                 // 3.3.3 winArena_Random
-        *data << uint32(0);                                 // 3.3.3 lossHonor_Random
+        *data << uint8(1);                                  // 3.3.3 hasWin_Random
+        *data << uint32(hk);                                 // 3.3.3 winHonor_Random
+        *data << uint32(plr->HasDoneRandomBattleGround() ? 0 : 25);                                 // 3.3.3 winArena_Random
+        *data << uint32(MaNGOS::Honor::hk_honor_at_level(plr->getLevel(),5));                                 // 3.3.3 lossHonor_Random
     }
 
     if(bgTypeId == BATTLEGROUND_AA)                         // arena
@@ -1880,7 +1893,7 @@ BattleGroundQueueTypeId BattleGroundMgr::BGQueueTypeId(BattleGroundTypeId bgType
         case BATTLEGROUND_IC:
             return BATTLEGROUND_QUEUE_IC;
         case BATTLEGROUND_RB:
-            return BATTLEGROUND_QUEUE_NONE;
+            return BATTLEGROUND_QUEUE_RANDOM;
         case BATTLEGROUND_AA:
         case BATTLEGROUND_NA:
         case BATTLEGROUND_RL:

@@ -2058,8 +2058,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasFreeBattleGroundQueueId()
         {
             for (int i=0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
+	    {
+		if (m_bgBattleGroundQueueID[i].bgQueueTypeId == BATTLEGROUND_QUEUE_RANDOM)
+		    return false;
+
                 if (m_bgBattleGroundQueueID[i].bgQueueTypeId == BATTLEGROUND_QUEUE_NONE)
                     return true;
+	    }
             return false;
         }
         void RemoveBattleGroundQueueId(BattleGroundQueueTypeId val)
@@ -2296,6 +2301,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool isActiveObject() const { return true; }
         bool canSeeSpellClickOn(Creature const* creature) const;
+
+	bool HasDoneRandomBattleGround() { return daily_random_BG_done; }
+	void SetRandomBGDone(bool done) { daily_random_BG_done = done; }
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2588,6 +2596,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_timeSyncTimer;
         uint32 m_timeSyncClient;
         uint32 m_timeSyncServer;
+
+	bool daily_random_BG_done;
 };
 
 void AddItemsSetItem(Player*player,Item *item);
