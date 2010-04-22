@@ -15445,9 +15445,9 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
 
     if(CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = %u", guid))
-	SetRandomBGDone(true);
+		SetRandomBGDone(true);
     else
-	SetRandomBGDone(false);
+		SetRandomBGDone(false);
     return true;
 }
 

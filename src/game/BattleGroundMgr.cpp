@@ -453,6 +453,9 @@ bool BattleGroundQueue::InviteGroupToBG(GroupQueueInfo * ginfo, BattleGround * b
         // set invitation
         ginfo->IsInvitedToBGInstanceGUID = bg->GetInstanceID();
         BattleGroundTypeId bgTypeId = bg->GetTypeID();
+        if(bg->IsRandomBG())
+			bgTypeId = BATTLEGROUND_RB;
+			
         BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, bg->GetArenaType());
         BattleGroundBracketId bracket_id = bg->GetBracketId();
 
@@ -1229,6 +1232,10 @@ void BattleGroundMgr::BuildBattleGroundStatusPacket(WorldPacket *data, BattleGro
     data->Initialize(SMSG_BATTLEFIELD_STATUS, (4+8+1+1+4+1+4+4+4));
     *data << uint32(QueueSlot);                             // queue id (0...1) - player can be in 2 queues in time
     // uint64 in client
+    BattleGroundTypeId _bgTypeId = bg->GetTypeID();
+    if(bg->IsRandomBG() && StatusID != STATUS_IN_PROGRESS)
+		_bgTypeId = BATTLEGROUND_RB;
+		
     *data << uint64( uint64(arenatype) | (uint64(0x0D) << 8) | (uint64(bg->GetTypeID()) << 16) | (uint64(0x1F90) << 48) );
     *data << uint8(0);                                      // 3.3.0
     *data << uint8(0);                                      // 3.3.0
@@ -1529,7 +1536,39 @@ BattleGround * BattleGroundMgr::CreateNewBattleGround(BattleGroundTypeId bgTypeI
             bg = new BattleGroundIC(*(BattleGroundIC*)bg_template);
             break;
         case BATTLEGROUND_RB:
-            bg = new BattleGroundRB(*(BattleGroundRB*)bg_template);
+            switch(urand(0,5))
+            {
+                case 0:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_WS);
+                    bg = new BattleGroundWS(*(BattleGroundWS*)bg_template);
+                    break;
+                case 1:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_AB);
+                    bg = new BattleGroundAB(*(BattleGroundAB*)bg_template);
+                    break;
+                case 2:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_EY);
+                    bg = new BattleGroundEY(*(BattleGroundEY*)bg_template);
+                    break;
+                case 3:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_AV);
+                    bg = new BattleGroundAV(*(BattleGroundAV*)bg_template);
+                    break;
+                case 4:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_SA);
+                    bg = new BattleGroundSA(*(BattleGroundSA*)bg_template);
+                    break;
+                case 5:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_IC);
+                    bg = new BattleGroundIC(*(BattleGroundIC*)bg_template);
+                    break;
+                default:
+                    bg_template = GetBattleGroundTemplate(BATTLEGROUND_RB);
+                    bg = new BattleGroundRB(*(BattleGroundRB*)bg_template);
+                    break;
+               
+            }            
+			bg->SetRandomBG(true);
             break;
         default:
             //error, but it is handled few lines above
@@ -1572,18 +1611,7 @@ uint32 BattleGroundMgr::CreateBattleGround(BattleGroundTypeId bgTypeId, bool IsA
         case BATTLEGROUND_DS: bg = new BattleGroundDS; break;
         case BATTLEGROUND_RV: bg = new BattleGroundRV; break;
         case BATTLEGROUND_IC: bg = new BattleGroundIC; break;
-	case BATTLEGROUND_RB:
-        switch(MapID)
-            {
-                case 30:  bg = new BattleGroundAV;     break;
-                case 489: bg = new BattleGroundWS;     break;
-                case 529: bg = new BattleGroundAB;  break;
-                case 566: bg = new BattleGroundEY;     break;
-                case 607: bg = new BattleGroundSA;     break;
-                case 628: bg = new BattleGroundIC;     break;
-                default:  bg = new BattleGroundRB; break;
-            }
-        break;
+		case BATTLEGROUND_RB: bg = new BattleGroundRB; break;
         default:bg = new BattleGround;   break;             // placeholder for non implemented BG
     }
 
