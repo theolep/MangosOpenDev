@@ -1218,7 +1218,38 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
 
 	if(recv_data.GetOpcode() == CMSG_CHAR_FACTION_CHANGE)
 	{
-		// TODO : add some stuff for faction change here
+		// Delete all current quests
+		CharacterDatabase.PExecute("DELETE FROM `character_queststatus` WHERE `status` = 3 AND guid ='%u'",GUID_LOPART(guid));
+
+		// Search each faction is targeted
+		BattleGroundTeamId team = BG_TEAM_ALLIANCE;
+		switch(race)
+		{
+			case RACE_ORC:
+			case RACE_TAUREN:
+			case RACE_UNDEAD_PLAYER:
+			case RACE_TROLL:
+			case RACE_BLOODELF:
+			//case RACE_GOBLIN: for cataclysm
+				team = BG_TEAM_HORDE;
+				break;
+			default: break;
+		}
+
+		// Achievement conversion
+		if(QueryResult *result2 = WorldDatabase.Query("SELECT alliance_id, horde_id FROM player_changefaction_achievements"))
+		{
+			do
+			{
+				Field *fields2 = result2->Fetch();
+				uint32 achiev_alliance = fields2[0].GetUInt32();
+				uint32 achiev_horde = fields2[1].GetUInt32();
+				CharacterDatabase.PExecute("UPDATE `character_achievements` set achievement = '%u' where achievement = '%u' and guid = '%u'",
+					team == BG_TEAM_ALLIANCE : achiev_alliance : achiev_horde, team == BG_TEAM_ALLIANCE ? achiev_horde : achiev_alliance, guid);
+			}
+			while( result2->NextRow() );
+		}
+		// TODO : add some stuff for faction change here (reputation,spell,items)
 	}
 
     std::string IP_str = GetRemoteAddress();
