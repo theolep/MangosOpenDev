@@ -1245,11 +1245,39 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
 				uint32 achiev_alliance = fields2[0].GetUInt32();
 				uint32 achiev_horde = fields2[1].GetUInt32();
 				CharacterDatabase.PExecute("UPDATE `character_achievements` set achievement = '%u' where achievement = '%u' and guid = '%u'",
-					team == BG_TEAM_ALLIANCE : achiev_alliance : achiev_horde, team == BG_TEAM_ALLIANCE ? achiev_horde : achiev_alliance, guid);
+					team == BG_TEAM_ALLIANCE ? achiev_alliance : achiev_horde, team == BG_TEAM_ALLIANCE ? achiev_horde : achiev_alliance, guid);
 			}
 			while( result2->NextRow() );
 		}
-		// TODO : add some stuff for faction change here (reputation,spell,items)
+
+		// Item conversion
+		if(QueryResult *result2 = WorldDatabase.Query("SELECT alliance_id, horde_id FROM player_changefaction_items"))
+		{
+			do
+			{
+				Field *fields2 = result2->Fetch();
+				uint32 achiev_alliance = fields2[0].GetUInt32();
+				uint32 achiev_horde = fields2[1].GetUInt32();
+				CharacterDatabase.PExecute("UPDATE `character_inventory` set item = '%u' where item = '%u' and guid = '%u'",
+					team == BG_TEAM_ALLIANCE ? achiev_alliance : achiev_horde, team == BG_TEAM_ALLIANCE ? achiev_horde : achiev_alliance, guid);
+			}
+			while( result2->NextRow() );
+		}
+
+		// Spell conversion
+		if(QueryResult *result2 = WorldDatabase.Query("SELECT alliance_id, horde_id FROM player_changefaction_spells"))
+		{
+			do
+			{
+				Field *fields2 = result2->Fetch();
+				uint32 achiev_alliance = fields2[0].GetUInt32();
+				uint32 achiev_horde = fields2[1].GetUInt32();
+				CharacterDatabase.PExecute("UPDATE `character_spell` set spell = '%u' where spell = '%u' and guid = '%u'",
+					team == BG_TEAM_ALLIANCE ? achiev_alliance : achiev_horde, team == BG_TEAM_ALLIANCE ? achiev_horde : achiev_alliance, guid);
+			}
+			while( result2->NextRow() );
+		}
+		// TODO : add some stuff for faction change here (reputation,spell)
 	}
 
     std::string IP_str = GetRemoteAddress();
