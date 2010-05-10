@@ -1225,6 +1225,8 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
 		CharacterDatabase.PExecute("DELETE FROM `guild_member` WHERE `guid`= '%u'",GUID_LOPART(guid));
 		// Delete Friend List
 		CharacterDatabase.PExecute("DELETE FROM `character_social` WHERE `guid`= '%u'",GUID_LOPART(guid));
+		// Leave Arena Teams
+		Player::LeaveAllArenaTeams(GUID_LOPART(guid));
 
 		// Search each faction is targeted
 		BattleGroundTeamId team = BG_TEAM_ALLIANCE;
@@ -1301,7 +1303,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
 				Field *fields2 = result2->Fetch();
 				uint32 reputation_alliance = fields2[0].GetUInt32();
 				uint32 reputation_horde = fields2[1].GetUInt32();
-				CharacterDatabase.PExecute("DELETE FROM character_reputation WHERE faction = '%u' AND guid = '%u'",eam == BG_TEAM_ALLIANCE ? reputation_horde : reputation_alliance, GUID_LOPART(guid));
+				CharacterDatabase.PExecute("DELETE FROM character_reputation WHERE faction = '%u' AND guid = '%u'",team == BG_TEAM_ALLIANCE ? reputation_horde : reputation_alliance, GUID_LOPART(guid));
 				CharacterDatabase.PExecute("UPDATE `character_reputation` set faction = '%u' where faction = '%u' AND guid = '%u'",
 					team == BG_TEAM_ALLIANCE ? reputation_alliance : reputation_horde, team == BG_TEAM_ALLIANCE ? reputation_horde : reputation_alliance, GUID_LOPART(guid));
 			}
